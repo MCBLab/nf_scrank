@@ -1,0 +1,5 @@
+*.rds
+*.dge.txt
+work/
+.nextflow/
+.nextflow.log*

@@ -6,13 +6,11 @@ format: html
 editor: visual
 ---
 
-## Introdução
+## IntroduC'C#o
 
-Este documento descreve o pipeline de inferência de redes regulatórias para validação do gene alvo **Smo** utilizando dados de scRNA-seq do modelo de Meduloblastoma (Ocasio et al., 2019). O pipeline é dividido em processamento de dados no R, computação paralela com GENIE3 via Nextflow (Linux/WSL) e análise estatística dos resultados.
+Este documento descreve o pipeline de inferC\*ncia de redes regulatC3rias para validaC'C#o do gene alvo **Smo** utilizando dados de scRNA-seq do modelo de Meduloblastoma (Ocasio et al., 2019). O pipeline C) dividido em processamento de dados no R, computaC'C#o paralela com GENIE3 via Nextflow (Linux/WSL) e anC!lise estatC-stica dos resultados.
 
-## Fase 1: Setup e Exploração Geral
-
-
+## Fase 1: Setup e ExploraC'C#o Geral
 
 ```{r}
 #| warning: false
@@ -24,66 +22,58 @@ library(ggplot2)
 library(ggpubr)
 library(scales)
 
-# Caminhos e Variáveis
-seuratObj_path <- "C:/Users/leoga/projeto_nextflow/vehicle_final_server.rds "
-base_dir <- "C:/Users/leoga/arquivos_mestrado/ocasio2019/Vehicle/"
+# https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE129730
+# GSE129730_RAW.tar: https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE129730&format=file
+# Original paper script: https://github.com/ben-babcock/Gershon_single-cell/blob/master/Single-Cell_Workflow.Rmd
+
+# Caminhos e VariC!veis
+seuratObj_path <- "data/vehicle_final_server.rds"
+base_dir <- "data/"
 target_gene <- "Smo"        
 
 message(">>> 1. Iniciando carregamento de dados...")
 
 # Lista de camundongos do artigo
 vehicle_ids <- c("MB05", "MB06", "MB10", "MB13", "MB15")
-obj_list <- list()
-
-for (id in vehicle_ids) {
-  f <- file.path(base_dir, paste0(id, ".dge.txt"))
+obj_list <- lapply(vehicle_ids, function(id){
+  f <- list.files(base_dir, pattern = paste0("*_",id, ".*"), full.names = T)
   if(file.exists(f)) {
-    obj_list[[id]] <- CreateSeuratObject(counts = read.table(f, header = TRUE, row.names=1), project = id)
+    obj_list <- CreateSeuratObject(counts = read.table(f, header = TRUE, row.names=1), project = id, min.features = 200)
   }
-}
+  return(obj_list)
+})
 
-# Mesclando todos os dados em um único objeto
+# Mesclando todos os dados em um C:nico objeto
 seuratObj <- merge(obj_list[[1]], y=obj_list[-1])
 seuratObj <- JoinLayers(seuratObj)
 
-message(">>> Realizando processamento padrão (Normalização, PCA, Clusters)...")
+seuratObj[["percent.mt"]] <- PercentageFeatureSet(seuratObj, pattern = "^Mt")
 seuratObj <- NormalizeData(seuratObj)
-seuratObj <- FindVariableFeatures(seuratObj)
+seuratObj <- FindVariableFeatures(seuratObj, x.low.cutoff = 0.05, x.high.cutoff = 5, 
+                        y.cutoff = 0.5, y.high.cutoff = Inf, 
+                        num.bin = 40)
 seuratObj <- ScaleData(seuratObj)
 seuratObj <- RunPCA(seuratObj, verbose=FALSE)
-seuratObj <- RunUMAP(seuratObj, dims=1:20, verbose=FALSE)
 seuratObj <- RunTSNE(seuratObj, dims=1:10,check_duplicates = FALSE, verbose=FALSE)
-seuratObj <- FindNeighbors(seuratObj, dims=1:20, verbose=FALSE)
-seuratObj <- FindClusters(seuratObj, resolution= 1.5, verbose=FALSE)
+seuratObj <- FindNeighbors(seuratObj, dims=1:10 , verbose=FALSE)
+seuratObj <- FindClusters(seuratObj, resolution= 0.7, verbose=FALSE)
 
 
 saveRDS(seuratObj, seuratObj_path)
 
-message(">>> Processamento inicial concluído e salvo!")
-# Garantindo a identidade dos clusters
-Idents(seuratObj) <- "seurat_clusters"
-
-# Verifica se t-SNE já existe, se não, roda
-if (!"tsne" %in% names(seuratObj@reductions)) {
-  seuratObj <- RunTSNE(seuratObj, dims = 1:10, check_duplicates = FALSE)
-}
-
 # Plot Global
-p1 <- DimPlot(seuratObj, reduction = "tsne", label = TRUE, label.size = 5) + 
-  ggtitle("Global t-SNE") + theme_void() + NoLegend()
-print(p1)
+p1 <- DimPlot(seuratObj, reduction = "tsne", label = TRUE, label.size = 5, pt.size = 1) + 
+  theme_void() + NoLegend()
 
-p3<- DotPlot(seuratObj,features =
+p2<- DotPlot(seuratObj,features =
                c("Col3a1","C1qb","Meg3","Sox10","Aqp4","Pecam1"))
 
-p5<- DotPlot(seuratObj,features = c("Gli1","Atoh1"                        ,"Mki67","Pcna","Ccnd1","Ccnd2","Barhl1","Rbfox3","Cntn2","Meg3"))
+p3<- DotPlot(seuratObj,features = c("Gli1","Atoh1"                        ,"Mki67","Pcna","Ccnd1","Ccnd2","Barhl1","Rbfox3","Cntn2", "Meg3"))
 
-p1 | p5
+p1 | p2
 
 p1 | p3
 
-p2 <- FeaturePlot(seuratObj, features = markers_found, reduction = "tsne", ncol = 3)
-print(p2)
 ```
 
 You can add options to executable code like this
@@ -91,24 +81,31 @@ You can add options to executable code like this
 ```{r}
 #| message: false
 
+Idents(seuratObj) <- "RNA_snn_res.0.7"
+
 seuratObj <- RenameIdents(seuratObj, c(
-  "1" = "NodeB",
-  "0" = "NodeA",
-  "2" = "NodeC",
-  "6" = "NodeD",
-  "8" = "Endothelial cells",
-  "7" = "Vascular fibroblasts",
-  "4" = "Astrocytes",
-  "5" = "Microglia",
-  "3" = "Oligodendrocytes"
+  "0" = "Node_C",
+  "1" = "Node_B",
+  "2" = "Node_B",
+  "3" = "Node_A",
+  "4" = "Node_B",
+  "5" = "Node_A",
+  "6" = "Node_D",
+  "7" = "Node_A",
+  "8" = "Oligodendrocytes",
+  "9" = "Astrocytes",
+  "10" = "Microglia",
+  "11" = "Neurons",
+  "12" = "Vascular fibroblasts",
+  "13" = "Endothelial"
 ))
 
-seuratObj <- subset(seuratObj, idents = c("NodeA", "NodeB","NodeC","NodeD"))
+subset(seuratObj, idents = c("Node_A", "Node_B","Node_C","Node_D")) %>%
+  DotPlot(features = c("Gli1","Atoh1"                        ,"Mki67","Pcna","Ccnd1","Ccnd2","Barhl1","Rbfox3","Cntn2", "Meg3"))
 
 
-output_path <- "C:/Users/leoga/projeto_nextflow/vehicle_final_server.rds" 
+output_path <- "data/vehicle_final_server.rds" 
 saveRDS(seuratObj, file = output_path)
-message(paste(">>> Arquivo salvo para o Nextflow em:", output_path))
 ```
 
 The `echo: false` option disables the printing of code (only output is displayed).

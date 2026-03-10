@@ -100,9 +100,17 @@ seuratObj <- RenameIdents(seuratObj, c(
   "13" = "Endothelial"
 ))
 
-subset(seuratObj, idents = c("Node_A", "Node_B","Node_C","Node_D")) %>%
-  DotPlot(features = c("Gli1","Atoh1"                        ,"Mki67","Pcna","Ccnd1","Ccnd2","Barhl1","Rbfox3","Cntn2", "Meg3"))
+# Plot Global
+p1 <- DimPlot(seuratObj, reduction = "tsne", label = TRUE, label.size = 5, pt.size = 1) + 
+  theme_void() + NoLegend()
 
+p2<- DotPlot(seuratObj,features =
+               c("Col3a1","C1qb","Meg3","Sox10","Aqp4","Pecam1"))
+
+p3<- DotPlot(seuratObj,features = c("Gli1","Atoh1"                        ,"Mki67","Pcna","Ccnd1","Ccnd2","Barhl1","Rbfox3","Cntn2", "Meg3"))
+
+p1 | p2
+p1 | p3
 
 output_path <- "data/vehicle_final_server.rds" 
 saveRDS(seuratObj, file = output_path)

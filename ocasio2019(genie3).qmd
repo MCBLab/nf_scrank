@@ -6,11 +6,11 @@ format: html
 editor: visual
 ---
 
-## IntroduC'C#o
+## Introducao
 
 Este documento descreve o pipeline de inferC\*ncia de redes regulatC3rias para validaC'C#o do gene alvo **Smo** utilizando dados de scRNA-seq do modelo de Meduloblastoma (Ocasio et al., 2019). O pipeline C) dividido em processamento de dados no R, computaC'C#o paralela com GENIE3 via Nextflow (Linux/WSL) e anC!lise estatC-stica dos resultados.
 
-## Fase 1: Setup e ExploraC'C#o Geral
+## Fase 1: Setup e Exploracao Geral
 
 ```{r}
 #| warning: false
@@ -26,21 +26,22 @@ library(scales)
 # GSE129730_RAW.tar: https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE129730&format=file
 # Original paper script: https://github.com/ben-babcock/Gershon_single-cell/blob/master/Single-Cell_Workflow.Rmd
 
-# Caminhos e VariC!veis
-seuratObj_path <- "data/vehicle_final_server.rds"
-base_dir <- "data/"
+base_dir <- "C:/Users/leoga/projeto_nextflow/data/GSE129730_RAW"
+seuratObj_path <- "C:/Users/leoga/projeto_nextflow/data/vehicle_final_server.rds"
 target_gene <- "Smo"        
-
-message(">>> 1. Iniciando carregamento de dados...")
 
 # Lista de camundongos do artigo
 vehicle_ids <- c("MB05", "MB06", "MB10", "MB13", "MB15")
+
 obj_list <- lapply(vehicle_ids, function(id){
-  f <- list.files(base_dir, pattern = paste0("*_",id, ".*"), full.names = T)
-  if(file.exists(f)) {
+  f <- list.files(base_dir, pattern = paste0(".*_", id, ".*"), full.names = T)
+  
+  if(length(f) > 0 && file.exists(f)) {
     obj_list <- CreateSeuratObject(counts = read.table(f, header = TRUE, row.names=1), project = id, min.features = 200)
+    return(obj_list)
+  } else {
+    stop("cant find file ", id)
   }
-  return(obj_list)
 })
 
 # Mesclando todos os dados em um C:nico objeto
@@ -59,7 +60,7 @@ seuratObj <- FindNeighbors(seuratObj, dims=1:10 , verbose=FALSE)
 seuratObj <- FindClusters(seuratObj, resolution= 0.7, verbose=FALSE)
 
 
-saveRDS(seuratObj, seuratObj_path)
+saveRDS(seuratObj, "C:/Users/leoga/projeto_nextflow/data/vehicle_final_server.rds")
 
 # Plot Global
 p1 <- DimPlot(seuratObj, reduction = "tsne", label = TRUE, label.size = 5, pt.size = 1) + 
@@ -100,8 +101,9 @@ seuratObj <- RenameIdents(seuratObj, c(
   "13" = "Endothelial"
 ))
 
+seuratObj$clone_annotation <- Idents(seuratObj)
 # Plot Global
-p1 <- DimPlot(seuratObj, reduction = "tsne", label = TRUE, label.size = 5, pt.size = 1) + 
+p2 <- DimPlot(seuratObj, reduction = "tsne", label = TRUE, label.size = 5, pt.size = 1) + 
   theme_void() + NoLegend()
 
 p2<- DotPlot(seuratObj,features =
@@ -112,60 +114,61 @@ p3<- DotPlot(seuratObj,features = c("Gli1","Atoh1"                        ,"Mki6
 p1 | p2
 p1 | p3
 
-output_path <- "data/vehicle_final_server.rds" 
-saveRDS(seuratObj, file = output_path)
+saveRDS(seuratObj, "C:/Users/leoga/projeto_nextflow/data/vehicle_final_server.rds")
+
+#utilizar vehicle_final_server.rds como input para etapa em nextflow
+
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
 
+##etapa de visualização: 
 ```{r}
 #| warning: false
 
-mat_A <- readRDS("C:/Users/leoga/projeto_nextflow/NodeA_weights.rds") 
-mat_B <- readRDS("C:/Users/leoga/projeto_nextflow/NodeB_weights.rds") 
-mat_C <- readRDS("C:/Users/leoga/projeto_nextflow/NodeC_weights.rds") 
-mat_D <- readRDS("C:/Users/leoga/projeto_nextflow/NodeD_weights.rds") 
+#| warning: false
+#| message: false
 
-rank_A <- rank(mat_A["Smo", ]) / ncol(mat_A) 
-rank_B <- rank(mat_B["Smo", ]) / ncol(mat_B) 
-rank_C <- rank(mat_C["Smo", ]) / ncol(mat_C) 
-rank_D <- rank(mat_D["Smo", ]) / ncol(mat_D)
-
-
-top_targets <- names(sort(rank_B, decreasing = TRUE))[1:51] 
-top_targets <- top_targets[top_targets != "Smo"]
+library(ggplot2)
+library(dplyr)
+library(scales)
+library(Seurat)
+library(patchwork) 
 
 
+df_scores <- read.table("C:/Users/leoga/projeto_nextflow/results_ocasio2019/rank_scores/perbscore_all_targets.txt", header = TRUE)
 
-df_plot <- data.frame(
-  Gene = rep(top_targets, 4),
-  Rank = c(rank_A[top_targets], rank_B[top_targets], rank_C[top_targets], rank_D[top_targets]),
-  
-  Node = factor(rep(c("A", "B", "C", "D"), each = length(top_targets)), 
-                levels = c("A", "B", "C", "D"))
-)
+df_plot <- df_scores %>%
+  rename(CellType = cell_type) %>% 
+  arrange(desc(perb_score)) %>%   
+  mutate(CellType = factor(CellType, levels = CellType)) 
 
-my_comparisons <- list( c("A", "B"), c("B", "C"), c("C", "D") )
 
-plot_box <- ggplot(df_plot, aes(x = Node, y = Rank, fill = Node)) +
- 
-  geom_boxplot(width = 0.5, alpha = 0.9, outlier.size = 1.5, outlier.shape = 1) +
-  theme_classic(base_size = 16) +
- 
-  scale_fill_manual(values = c("A" = "#FFFFFF", "B" = "#E41A1C", "C" = "#D95F02", "D" = "#FE9929")) +
- 
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0, 1.25)) +
+p1 <- ggplot(df_plot, aes(x = CellType, y = perb_score, fill = CellType)) +
+  geom_col(color = "black", alpha = 0.85, width = 0.7) +
+  theme_classic(base_size = 14) +
+  scale_y_continuous(labels = scales::scientific) +
   labs(
-    y = "Score (GENIE3 Rank)", 
-    x = "Diseased cell type"
+    title = "Perturbation Score do Gene Smo (scRank)",
+    y = "Score", 
+    x = "Tipos Celulares"
   ) +
-
-  stat_compare_means(comparisons = my_comparisons, method = "wilcox.test", label = "p.signif") +
   theme(
     legend.position = "none",
-    axis.text.x = element_text(color = "black"),
-    axis.text.y = element_text(color = "black")
+    axis.text.x = element_text(angle = 45, hjust = 1, color = "black", face = "bold"),
+    axis.text.y = element_text(color = "black"),
+    plot.title = element_text(face = "bold")
   )
 
-print(plot_box)
+p1
+
+seuratObj <- readRDS("C:/Users/leoga/projeto_nextflow/data/vehicle_final_server.rds")
+
+genes <- c("Mki67", "Pcna", "Barhl1", "Rbfox3")
+
+genes_plot <- VlnPlot(seuratObj, features = genes, group.by = "clone_annotation", pt.size = 0)
+
+p1 | p2
+
+DotPlot(seuratObj,features = "Smo")
+
 ```

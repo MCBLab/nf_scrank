@@ -1,9 +1,9 @@
-process SCRANK {
+process GENIE3 {
   """
   Generates WGN based on scRank obj
   """
 
-  label "r_scrank"
+  label "r_genie3"
 
   container "${ workflow.containerEngine == 'singularity' ? 'docker://juliaapolonio/scrank:latest':
             'docker.io/juliaapolonio/scrank:latest' }"
@@ -21,6 +21,6 @@ process SCRANK {
   script:
     """
     #!/bin/bash
-    run_scrank.R ${scobj} ${n_cores} 
+    genie3.R ${scobj} ${n_cores} 
     """
 }

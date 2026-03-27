@@ -45,11 +45,8 @@ split_obj <- SplitObject(seurat_downsample, split.by = column)
 
 # Create scRank object
 sc_obj <- lapply(split_obj, function(seuobj){
-  obj <- CreateScRank(input = seuobj,
-                          species = species, 
-                          cell_type = column,
-                          target = target)
-  obj@para$gene4use <- genes_4_use
+  obj <- seuobj
+  obj@misc$gene4use <- genes_4_use
   return(obj)
 })
 

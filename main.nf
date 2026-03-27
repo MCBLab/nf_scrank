@@ -5,7 +5,7 @@
 */
 
 
-include { SCRANK } from "./modules/local/scrank/main.nf"
+include { GENIE3 } from "./modules/local/genie3/main.nf"
 include { DOWNSAMPLE } from "./modules/local/downsample_and_split/main.nf"
 include { MERGE } from "./modules/local/merge_and_downstream/main.nf"
 
@@ -31,9 +31,9 @@ workflow {
     .set { sc_obj }
 
 
-    SCRANK( sc_obj, n_cores )
+    GENIE3( sc_obj, n_cores )
 
-    SCRANK.out.rank_obj
+    GENIE3.out.rank_obj
     .collect()
     .set { rank_cells  }
 

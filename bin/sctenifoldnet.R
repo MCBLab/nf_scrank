@@ -18,7 +18,7 @@ mat <- mat[,colSums(mat) > 30]
 
 n_cells <- dim(sc_obj)[2]
 
-outputH0 <- scTenifoldNet(X = mat, Y = mat, nc_nNet = 10, nc_nCells = n_cells/2, nCores = n_cores, qc = F)
+outputH0 <- scTenifoldNet(X = mat, Y = mat, nc_nNet = 10, nc_nCells = n_cells/3, nCores = n_cores, qc = F)
 weight <- as.matrix(outputH0$tensorNetworks$X)
 
 # Save the object

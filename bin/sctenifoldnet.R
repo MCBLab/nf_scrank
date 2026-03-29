@@ -18,8 +18,18 @@ mat <- mat[,colSums(mat) > 30]
 
 n_cells <- dim(sc_obj)[2]
 
-outputH0 <- scTenifoldNet(X = mat, Y = mat, nc_nNet = 10, nc_nCells = n_cells/3, nCores = n_cores, qc = F)
-weight <- as.matrix(outputH0$tensorNetworks$X)
+X <- cpmNormalization(mat)
+
+xList <- makeNetworks(X = X, nCells = n_cells/3, nNet = 10,
+                        nComp = 3, scaleScores = TRUE,
+                        symmetric = FALSE, q = 0.95,
+                        nCores = n_cores)
+
+tensorOut <- tensorDecomposition(xList = xList, K = 3,
+                                 nDecimal = 1, maxIter = 1e3,
+                                 maxError = 1e-5)
+
+weight <- as.matrix(tensorOut$X)
 
 # Save the object
 saveRDS(weight, file = paste0(cell_type, "_weight_sctenifoldnet_", n_cells, ".rds"))

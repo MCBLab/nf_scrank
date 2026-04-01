@@ -20,14 +20,16 @@ n_cells <- dim(sc_obj)[2]
 
 X <- cpmNormalization(mat)
 
-xList <- makeNetworks(X = X, nCells = n_cells/3, nNet = 10,
-                        nComp = 3, scaleScores = TRUE,
-                        symmetric = FALSE, q = 0.95,
+n_cells <- min(1000, dim(sc_obj)[2])
+
+xList <- makeNetworks(X = X, nCells = n_cells, nNet = 30,
+                        nComp = 5, scaleScores = TRUE,
+                        symmetric = FALSE, q = 0.9,
                         nCores = n_cores)
 
-tensorOut <- tensorDecomposition(xList = xList, K = 3,
-                                 nDecimal = 1, maxIter = 1e3,
-                                 maxError = 1e-5)
+tensorOut <- tensorDecomposition(xList = xList, K = 5,
+                                 nDecimal = 2, maxIter = 2e3,
+                                 maxError = 1e-6)
 
 weight <- as.matrix(tensorOut$X)
 

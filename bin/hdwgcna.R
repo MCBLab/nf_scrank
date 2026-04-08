@@ -36,7 +36,7 @@ if (file.exists(targets_file)) {
 seuratObj$wgcna_group <- "target_clone"
 nome_arquivo <- paste0(cell_type, "_weight_hdWGCNA_", n_cells, ".rds")
 
-seuratObj <- SetupForWGCNA(seuratObj, wgcna_name = "network")
+seuratObj <- SetupForWGCNA(seuratObj,seuratObj@misc$gene4use, wgcna_name = "network")
 seuratObj <- MetacellsByGroups(
   seurat_obj = seuratObj,
   group.by = "wgcna_group",

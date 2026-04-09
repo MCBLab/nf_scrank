@@ -20,23 +20,26 @@ if (n_cells < 150) {
   quit(save = "no", status = 0)
 }
 
+genes_4_use <- seuratObj@misc$gene4use
+
 if (file.exists(targets_file)) {
   targets <- readLines(targets_file)
   targets <- targets[targets != ""]
   
-  if (length(VariableFeatures(seuratObj)) == 0) {
-    seuratObj <- FindVariableFeatures(seuratObj, selection.method = "vst", nfeatures = 2000)
-  }
-  
-  current_hvgs <- VariableFeatures(seuratObj)
   valid_targets <- intersect(targets, rownames(seuratObj))
-  VariableFeatures(seuratObj) <- unique(c(current_hvgs, valid_targets))
+  genes_4_use <- unique(c(genes_4_use, valid_targets))
 }
 
 seuratObj$wgcna_group <- "target_clone"
 nome_arquivo <- paste0(cell_type, "_weight_hdWGCNA_", n_cells, ".rds")
 
-seuratObj <- SetupForWGCNA(seuratObj,seuratObj@misc$gene4use, wgcna_name = "network")
+seuratObj <- SetupForWGCNA(
+  seuratObj,
+  gene_select = "custom",
+  features = genes_4_use,
+  wgcna_name = "network"
+)
+
 seuratObj <- MetacellsByGroups(
   seurat_obj = seuratObj,
   group.by = "wgcna_group",

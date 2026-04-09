@@ -25,9 +25,7 @@ genes_4_use <- seuratObj@misc$gene4use
 if (file.exists(targets_file)) {
   targets <- readLines(targets_file)
   targets <- targets[targets != ""]
-  
-  valid_targets <- intersect(targets, rownames(seuratObj))
-  genes_4_use <- unique(c(genes_4_use, valid_targets))
+  genes_4_use <- unique(c(genes_4_use, intersect(targets, rownames(seuratObj))))
 }
 
 seuratObj$wgcna_group <- "target_clone"
@@ -59,16 +57,20 @@ seuratObj <- SetDatExpr(
 )
 
 seuratObj <- TestSoftPowers(seuratObj, networkType = 'signed')
+power_est <- GetActiveWGCNA(seuratObj)$sft$powerEstimate
 
-net_data <- GetActiveWGCNA(seuratObj)
-power_est <- net_data$sft$powerEstimate
+final_power <- if(is.null(power_est) || is.na(power_est) || is.infinite(power_est)) 9 else power_est
 
-if(is.null(power_est) || is.na(power_est) || is.infinite(power_est)) {
-    seuratObj <- ConstructNetwork(seuratObj, setDatExpr = FALSE, overwrite_tom = TRUE, tom_name = "network", soft_power = 9)
-} else {
-    seuratObj <- ConstructNetwork(seuratObj, setDatExpr = FALSE, overwrite_tom = TRUE, tom_name = "network")
-}
+seuratObj <- ConstructNetwork(
+  seuratObj, 
+  setDatExpr = FALSE, 
+  overwrite_tom = TRUE, 
+  tom_name = "network", 
+  soft_power = final_power,
+  minModuleSize = 10 
+)
 
 weight <- as.matrix(GetTOM(seuratObj))
 weight <- weight[colnames(weight), ]
+
 saveRDS(weight, file = nome_arquivo)

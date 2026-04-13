@@ -6,7 +6,7 @@ process HDWGCNA {
     
     queue 'amd-512'
     cpus params.n_cores
-    memory '150 GB'
+    memory '32 GB'
     
     input:
     path rds_file

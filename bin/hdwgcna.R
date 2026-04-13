@@ -52,7 +52,7 @@ seuratObj <- NormalizeMetacells(seuratObj)
 seuratObj <- SetDatExpr(
   seuratObj,
   group_name = "target_clone",
-  group.by = "wgcna_group",
+  group.by = column,
   assay = 'RNA',
   layer = 'data' 
 )

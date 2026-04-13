@@ -6,13 +6,13 @@ library(scRank)
 args <- commandArgs(trailingOnly = TRUE)
 
 seuratObj <- args[1]
-n_cores <- args[2]
-species <- args[3]
-target <- args[4]
-column <- args[5]
+species <- args[2]
+targets <- args[3]
+column <- args[4]
+n_cores <- args[5]
 
-target <- read.table(target, header = FALSE)
-target <- target$V1
+targets <- readLines(targets)
+target <- targets[1]
 
 n_cores <- as.integer(n_cores)
 
@@ -20,10 +20,10 @@ cell_type <- sub(".RDS", "", seuratObj)
 
 sc_obj <- readRDS(seuratObj)
 
-obj <- CreateScRank(input = seuratObj,
+obj <- CreateScRank(input = sc_obj,
                     species = species,
                     cell_type = column,
-                    target = target[1])
+                    target = target)
 
 obj <- Constr_net(obj)
 

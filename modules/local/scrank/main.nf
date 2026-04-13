@@ -10,6 +10,9 @@ process SCRANK {
 
   input:
     path scobj
+    val species
+    path target
+    val column
     val n_cores
 
   output:
@@ -21,6 +24,6 @@ process SCRANK {
   script:
     """
     #!/bin/bash
-    scrank.R ${scobj} ${n_cores} 
+    scrank.R ${scobj} ${species} ${target} ${column} ${n_cores}
     """
 }

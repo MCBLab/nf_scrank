@@ -41,7 +41,7 @@ seuratObj <- SetupForWGCNA(
 
 seuratObj <- MetacellsByGroups(
   seurat_obj = seuratObj,
-  group.by = "wgcna_group",
+  group.by = column,
   k = 25,
   min_cells = 100, 
   max_shared = 10,

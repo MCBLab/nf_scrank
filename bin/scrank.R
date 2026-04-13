@@ -27,7 +27,7 @@ obj <- CreateScRank(input = sc_obj,
 
 obj <- Constr_net(obj)
 
-weight <- obj@net[cell_type]
+weight <- obj@net[cell_type][[1]]
 
 n_cells <- dim(sc_obj)[2]
 

@@ -7,8 +7,9 @@ suppressPackageStartupMessages({
 
 args <- commandArgs(trailingOnly = TRUE)
 input_rds <- args[1]
-n_cores <- as.numeric(args[2])
-targets_file <- args[3]
+column <- args[2]
+n_cores <- as.numeric(args[3])
+targets_file <- args[4]
 
 allowWGCNAThreads(nThreads = n_cores)
 

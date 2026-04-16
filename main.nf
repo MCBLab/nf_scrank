@@ -1,10 +1,20 @@
-nextflow.enable.dsl=2
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT MODULES
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
 
 include { GENIE3 } from "./modules/local/genie3/main.nf"
 include { SCTENIFOLDNET } from "./modules/local/sctenifoldnet/main.nf"
-include { HDWGCNA } from "./modules/local/hdwgcna/main.nf"
 include { DOWNSAMPLE } from "./modules/local/downsample_and_split/main.nf"
 include { MERGE } from "./modules/local/merge_and_downstream/main.nf"
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    RUN MAIN WORKFLOW
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
 
 workflow {
 
@@ -16,8 +26,8 @@ workflow {
     target = file(params.target)
     network = params.network
 
-    if( !(network in ['genie3', 'sctnet', 'hdwgcna']) ) {
-        error "Invalid --network '${params.network}'. Supported values: genie3, sctnet or hdwgcna"
+    if( !(network in ['genie3', 'sctnet']) ) {
+        error "Invalid --network '${params.network}'. Supported values: genie3 or sctnet"
     }
 
     DOWNSAMPLE( obj, target, column, species, n_cells )
@@ -33,17 +43,10 @@ workflow {
         .collect()
         .set { rank_cells  }
     }
-    else if( network == 'sctnet' ) {
+    else {
         SCTENIFOLDNET( sc_obj, n_cores )
 
         SCTENIFOLDNET.out.rank_obj
-        .collect()
-        .set { rank_cells  }
-    }
-    else if( network == 'hdwgcna' ) {
-        HDWGCNA( sc_obj, n_cores )
-
-        HDWGCNA.out.rank_obj
         .collect()
         .set { rank_cells  }
     }

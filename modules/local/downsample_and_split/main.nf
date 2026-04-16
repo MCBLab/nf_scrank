@@ -18,6 +18,7 @@ process DOWNSAMPLE {
 
   output:
     path "*.RDS", emit: scrank_obj
+    path "seurat_downsample.rds", emit: seurat_downsample
 
   when:
   task.ext.when == null || task.ext.when  

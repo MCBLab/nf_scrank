@@ -41,12 +41,12 @@ obj <- CreateScRank(input = seurat_downsample,
 genes_4_use <- unique(c(obj@para$gene4use, targets))
 genes_4_use <- setdiff(genes_4_use, non_targets)
 
+seurat_downsample@misc$gene4use <- genes_4_use                
 split_obj <- SplitObject(seurat_downsample, split.by = column)
 
 # Create scRank object
 sc_obj <- lapply(split_obj, function(seuobj){
   obj <- seuobj
-  obj@misc$gene4use <- genes_4_use
   return(obj)
 })
 
@@ -61,3 +61,4 @@ invisible(lapply(names(sc_obj), function(name) {
   saveRDS(sc_obj[[name]], file = file_name)
 }))
 
+saveRDS(seurat_downsample, file = "seurat_downsample.rds")

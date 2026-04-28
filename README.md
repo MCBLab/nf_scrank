@@ -29,16 +29,16 @@ This final step collects the perturbation scores from all parallel GENIE3 tasks 
 3. Start running your analysis!
 
 ```bash
-nextflow run MCBLab/NF_scRank \
+nextflow run nf_scrank/main.nf \
   --obj /path/to/your/seurat_object.rds \
   --column clone_annotation \
   --species human \
   --n_cells 3000 \
   --n_cores 32 \
   --target /path/to/targets.txt \
+  --network genie3 \
   --outdir results \
-  -profile singularity \
-  -resume
+  -profile singularity
 
 ``` 
 

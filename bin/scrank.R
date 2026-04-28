@@ -29,6 +29,19 @@ obj <- Constr_net(obj)
 
 weight <- obj@net[cell_type][[1]]
 
+# If NULL, create gene x gene zero matrix
+if (is.null(weight)) {
+  
+  genes <- obj@para$gene4use
+  n <- length(genes)
+  
+  weight <- matrix(0, nrow = n, ncol = n)
+  rownames(weight) <- genes
+  colnames(weight) <- genes
+  
+  message(paste0("Weight was NULL for ", cell_type, " — replaced with zero matrix"))
+}
+
 n_cells <- dim(sc_obj)[2]
 
 # Save the object

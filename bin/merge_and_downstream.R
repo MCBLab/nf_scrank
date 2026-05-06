@@ -15,7 +15,7 @@ rds_files <- args[5:length(args)]
 
 cell_types <- sub("_weight.*", "", basename(rds_files))
 targets <- readLines(targets)
-target <- targets[1]
+target <- strsplit(targets[1], split = ";")[[1]]
 
 sc_objs <- lapply(rds_files, readRDS)
 
@@ -44,6 +44,8 @@ all_ranks <- data.frame()
 for (target_sc in targets) {
   message("Processing target: ", target_sc)
   
+  target_sc <- strsplit(target_sc, split = ";")[[1]]
+
   # Set the target
   obj@para$target <- target_sc
   

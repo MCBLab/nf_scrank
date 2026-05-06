@@ -13,7 +13,9 @@ species <- args[4]
 n_cells <- as.integer(args[5])
 
 targets <- readLines(targets)
-target <- targets[1]
+target <- strsplit(targets[1], split = ";")[[1]]
+
+targets <- unlist(strsplit(targets, split = ";"))
 
 if (seuratObj == 'AML_object.rda') {
     load(seuratObj)

@@ -15,6 +15,8 @@ n_cells <- as.integer(args[5])
 targets <- readLines(targets)
 target <- strsplit(targets[1], split = ";")[[1]]
 
+targets <- unlist(strsplit(targets, split = ";"))
+
 if (seuratObj == 'AML_object.rda') {
     load(seuratObj)
     seuratObj <- seuratObj[c(VariableFeatures(seuratObj)[1:200], target),]

@@ -25,7 +25,7 @@ obj <- CreateScRank(input = sc_obj,
                     cell_type = column,
                     target = target)
 
-obj <- Constr_net(obj, n_cores = n_cores)
+obj <- Constr_net(obj, n.core = n_cores)
 
 weight <- obj@net[cell_type][[1]]
 
